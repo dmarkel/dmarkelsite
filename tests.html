@@ -147,6 +147,31 @@
     assert('lands on ground: y=groundY', p.y, GY);
   }
 
+  // ── updateCamera ─────────────────────────────────────────────
+  section('updateCamera');
+  function clampC(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function updateCameraT(camera, player, canvasW, worldWidth) {
+    camera.x = clampC(player.x - canvasW * 0.4, 0, worldWidth - canvasW);
+  }
+  // Near start: clamp at 0
+  {
+    const cam = { x: 0 };
+    updateCameraT(cam, { x: 100 }, 1280, 4096);
+    assert('camera clamps at left edge', cam.x, 0);
+  }
+  // Mid world: follows player
+  {
+    const cam = { x: 0 };
+    updateCameraT(cam, { x: 1000 }, 1280, 4096);
+    assert('camera follows player: x = 1000 - 512', cam.x, 1000 - 512);
+  }
+  // Near end: clamps at right edge
+  {
+    const cam = { x: 0 };
+    updateCameraT(cam, { x: 4000 }, 1280, 4096);
+    assert('camera clamps at right edge', cam.x, 4096 - 1280);
+  }
+
   // ── Summary ──────────────────────────────────────────────────
   const summary = document.createElement('h2');
   summary.textContent = `${passed} passed, ${failed} failed`;

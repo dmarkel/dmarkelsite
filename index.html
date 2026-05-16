@@ -162,6 +162,17 @@
       }
     }
 
+    // ── CAMERA ───────────────────────────────────────────────────
+    function createCamera() {
+      return { x: 0 };
+    }
+
+    function updateCamera(camera, player, canvasW, worldWidth) {
+      // Keep player at 40% from left — more world visible ahead when walking right
+      const target = player.x - canvasW * 0.4;
+      camera.x = clamp(target, 0, worldWidth - canvasW);
+    }
+
     // ── BOOTSTRAP ────────────────────────────────────────────────
     const canvas = document.getElementById('game');
     const ctx    = canvas.getContext('2d');
