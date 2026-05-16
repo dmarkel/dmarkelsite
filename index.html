@@ -94,9 +94,8 @@
     }
 
     function renderPlayer(ctx, player, cameraX, canvasH) {
-      const groundY  = GROUND_FRAC * canvasH;
       const screenX  = Math.round(player.x - cameraX);
-      const screenY  = Math.round(groundY - CHAR_H);
+      const screenY  = Math.round(player.y - CHAR_H);  // player.y = feet; moves up when jumping
 
       const animKey  = player.animState === 'idle' ? 'walk' : player.animState;
       const frameArr = FRAMES[animKey] || FRAMES.walk;
