@@ -57,6 +57,23 @@
       return ((-offset % scaledImgW) + scaledImgW) % scaledImgW - scaledImgW;
     }
 
+    // ── INPUT ────────────────────────────────────────────────────────
+    const keys = { left: false, right: false, up: false, down: false };
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft')  { keys.left  = true; e.preventDefault(); }
+      if (e.key === 'ArrowRight') { keys.right = true; e.preventDefault(); }
+      if (e.key === 'ArrowUp')    { keys.up    = true; e.preventDefault(); }
+      if (e.key === 'ArrowDown')  { keys.down  = true; e.preventDefault(); }
+    });
+
+    document.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft')  keys.left  = false;
+      if (e.key === 'ArrowRight') keys.right = false;
+      if (e.key === 'ArrowUp')    keys.up    = false;
+      if (e.key === 'ArrowDown')  keys.down  = false;
+    });
+
     // ── BOOTSTRAP ────────────────────────────────────────────────
     const canvas = document.getElementById('game');
     const ctx    = canvas.getContext('2d');
