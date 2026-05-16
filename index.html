@@ -20,6 +20,43 @@
   <div id="loading">Loading...</div>
   <canvas id="game"></canvas>
   <script>
+    // ── CONSTANTS ────────────────────────────────────────────────────
+    const SPRITE_COLS  = 5;
+    const SPRITE_ROWS  = 3;
+    const FRAME_W      = 1536 / SPRITE_COLS;   // 307.2
+    const FRAME_H      = 1024 / SPRITE_ROWS;   // 341.33
+    const CHAR_SCALE   = 0.38;
+    const CHAR_W       = Math.round(FRAME_W * CHAR_SCALE);  // ~117px displayed
+    const CHAR_H       = Math.round(FRAME_H * CHAR_SCALE);  // ~130px displayed
+
+    const GRAVITY      = 0.5;    // px/frame² at 60fps
+    const JUMP_VY      = -12;    // px/frame at 60fps (negative = upward)
+    const WALK_SPEED   = 4;      // px/frame at 60fps
+    const ANIM_FPS     = 8;      // walk/crouch cycle speed
+    const GROUND_FRAC  = 0.83;   // feet Y as fraction of canvas height
+
+    const ANIM = {
+      walk:   { row: 0, frames: 5 },
+      jump:   { row: 1, frames: 3 },
+      crouch: { row: 2, frames: 3 },
+    };
+
+    // ── UTILITIES ────────────────────────────────────────────────────
+    function clamp(v, lo, hi) {
+      return v < lo ? lo : v > hi ? hi : v;
+    }
+
+    function getAnimFrame(frameCount, elapsed, fps) {
+      return Math.floor(elapsed * fps) % frameCount;
+    }
+
+    // Returns the leftmost canvas X at which to start drawing tiled parallax layer.
+    // Loop: for (let x = result; x < canvasW; x += scaledImgW)
+    function getParallaxDrawX(cameraX, speed, scaledImgW) {
+      const offset = cameraX * speed;
+      return ((-offset % scaledImgW) + scaledImgW) % scaledImgW - scaledImgW;
+    }
+
     // ── BOOTSTRAP ────────────────────────────────────────────────
     const canvas = document.getElementById('game');
     const ctx    = canvas.getContext('2d');

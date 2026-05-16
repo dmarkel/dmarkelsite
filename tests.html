@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Tests</title>
+<style>
+  body { font-family: monospace; padding: 20px; background: #111; color: #ccc; }
+  .pass { color: #4caf50; }
+  .fail { color: #f44336; }
+  h2    { margin: 16px 0 8px; color: #fff; }
+</style>
+</head>
+<body>
+<h1>Unit Tests</h1>
+<div id="out"></div>
+<script>
+  let passed = 0, failed = 0;
+
+  function assert(label, got, expected) {
+    const ok  = JSON.stringify(got) === JSON.stringify(expected);
+    const div = document.createElement('div');
+    div.className = ok ? 'pass' : 'fail';
+    div.textContent = (ok ? '✓ ' : '✗ ') + label
+      + (ok ? '' : `  →  got ${JSON.stringify(got)}, expected ${JSON.stringify(expected)}`);
+    document.getElementById('out').appendChild(div);
+    ok ? passed++ : failed++;
+  }
+
+  function section(name) {
+    const h = document.createElement('h2');
+    h.textContent = name;
+    document.getElementById('out').appendChild(h);
+  }
+
+  // ── Copy utility functions here (keep in sync with index.html) ─
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function getAnimFrame(frameCount, elapsed, fps) { return Math.floor(elapsed * fps) % frameCount; }
+  function getParallaxDrawX(cameraX, speed, scaledImgW) {
+    const offset = cameraX * speed;
+    return ((-offset % scaledImgW) + scaledImgW) % scaledImgW - scaledImgW;
+  }
+
+  // ── clamp ────────────────────────────────────────────────────
+  section('clamp');
+  assert('below range',  clamp(-5,  0, 10), 0);
+  assert('above range',  clamp(15,  0, 10), 10);
+  assert('at min',       clamp(0,   0, 10), 0);
+  assert('at max',       clamp(10,  0, 10), 10);
+  assert('within range', clamp(5,   0, 10), 5);
+
+  // ── getAnimFrame ─────────────────────────────────────────────
+  section('getAnimFrame');
+  assert('frame 0 at t=0',               getAnimFrame(5, 0,     8), 0);
+  assert('frame 1 at t=0.125s (8fps)',   getAnimFrame(5, 0.125, 8), 1);
+  assert('frame 4 at t=0.5s',           getAnimFrame(5, 0.5,   8), 4);
+  assert('wraps to 0 at t=0.625s',       getAnimFrame(5, 0.625, 8), 0);
+  assert('frame 0 for jump at t=0',      getAnimFrame(3, 0,     8), 0);
+  assert('frame 2 for jump at t=0.25s', getAnimFrame(3, 0.25,  8), 2);
+
+  // ── getParallaxDrawX ─────────────────────────────────────────
+  section('getParallaxDrawX (scaledImgW=500)');
+  const W = 500;
+  // At cameraX=0: offset=0, result=-500 (loop draws at -500 then 0 — image starts at left edge)
+  assert('cameraX=0, speed=0.5', getParallaxDrawX(0, 0.5, W), -W);
+  // At cameraX=100, speed=0.5: offset=50, image shifts 50px left; result=-50
+  assert('cameraX=100, speed=0.5', getParallaxDrawX(100, 0.5, W), -50);
+  // At cameraX=1000, speed=0.5: offset=500=W, wraps back to -W
+  assert('cameraX=1000, speed=0.5 (full cycle)', getParallaxDrawX(1000, 0.5, W), -W);
+  // Slower layer moves less
+  const slow = getParallaxDrawX(200, 0.1, W);
+  const fast = getParallaxDrawX(200, 0.9, W);
+  assert('slower layer moves less than faster', slow > fast, true);
+
+  // ── Summary ──────────────────────────────────────────────────
+  const summary = document.createElement('h2');
+  summary.textContent = `${passed} passed, ${failed} failed`;
+  summary.style.color = failed === 0 ? '#4caf50' : '#f44336';
+  document.getElementById('out').appendChild(summary);
+</script>
+</body>
+</html>
