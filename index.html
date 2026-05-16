@@ -99,6 +99,69 @@
       }
     }
 
+    // ── PLAYER ───────────────────────────────────────────────────────
+    function createPlayer(groundY) {
+      return {
+        x:            200,       // world x — left edge of displayed sprite
+        y:            groundY,   // world y — feet (bottom of displayed sprite)
+        vy:           0,         // vertical velocity (px/frame at 60fps)
+        grounded:     true,
+        facingLeft:   false,
+        jumpConsumed: false,     // prevents hold-to-multijump
+        animState:    'idle',
+        animElapsed:  0,         // seconds since current anim started
+      };
+    }
+
+    function getAnimState(player, keys) {
+      if (!player.grounded)         return 'jump';
+      if (keys.down)                return 'crouch';
+      if (keys.left || keys.right)  return 'walk';
+      return 'idle';
+    }
+
+    function updatePlayer(player, keys, dt, groundY, worldWidth) {
+      const dtf = dt * 60;  // normalize physics to 60fps feel
+
+      // Horizontal movement (disabled while crouching)
+      let vx = 0;
+      if (!keys.down) {
+        if (keys.left)  { vx = -WALK_SPEED; player.facingLeft = true;  }
+        if (keys.right) { vx =  WALK_SPEED; player.facingLeft = false; }
+      }
+      player.x = clamp(player.x + vx * dtf, 0, worldWidth - CHAR_W);
+
+      // Jump — one-shot, grounded only, prevents re-trigger while key held
+      if (keys.up && player.grounded && !player.jumpConsumed) {
+        player.vy           = JUMP_VY;
+        player.grounded     = false;
+        player.jumpConsumed = true;
+      }
+      if (!keys.up) player.jumpConsumed = false;
+
+      // Gravity + vertical integration
+      if (!player.grounded) {
+        player.vy += GRAVITY * dtf;
+        player.y  += player.vy * dtf;
+      }
+
+      // Ground collision
+      if (player.y >= groundY) {
+        player.y    = groundY;
+        player.vy   = 0;
+        player.grounded = true;
+      }
+
+      // Animation state
+      const next = getAnimState(player, keys);
+      if (next !== player.animState) {
+        player.animState   = next;
+        player.animElapsed = 0;
+      } else {
+        player.animElapsed += dt;
+      }
+    }
+
     // ── BOOTSTRAP ────────────────────────────────────────────────
     const canvas = document.getElementById('game');
     const ctx    = canvas.getContext('2d');

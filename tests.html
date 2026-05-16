@@ -69,6 +69,84 @@
   const fast = getParallaxDrawX(200, 0.9, W);
   assert('slower layer moves less than faster', slow > fast, true);
 
+  // ── updatePlayer (physics) ───────────────────────────────────────
+  section('updatePlayer physics');
+
+  // Recreate player and helpers inline (no import)
+  const GRAVITY_T = 0.5, JUMP_VY_T = -12, WALK_SPEED_T = 4, CHAR_W_T = 117;
+  function clampT(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+  function createPlayerT(groundY) {
+    return { x:200, y:groundY, vy:0, grounded:true, facingLeft:false,
+             jumpConsumed:false, animState:'idle', animElapsed:0 };
+  }
+  function updatePlayerT(player, keys, dt, groundY, worldWidth) {
+    const dtf = dt * 60;
+    let vx = 0;
+    if (!keys.down) {
+      if (keys.left)  { vx = -WALK_SPEED_T; player.facingLeft = true; }
+      if (keys.right) { vx =  WALK_SPEED_T; player.facingLeft = false; }
+    }
+    player.x = clampT(player.x + vx * dtf, 0, worldWidth - CHAR_W_T);
+    if (keys.up && player.grounded && !player.jumpConsumed) {
+      player.vy = JUMP_VY_T; player.grounded = false; player.jumpConsumed = true;
+    }
+    if (!keys.up) player.jumpConsumed = false;
+    if (!player.grounded) { player.vy += GRAVITY_T * dtf; player.y += player.vy * dtf; }
+    if (player.y >= groundY) { player.y = groundY; player.vy = 0; player.grounded = true; }
+  }
+
+  const GY = 600, WW = 4096, DT = 1/60;
+  // Walk right
+  {
+    const p = createPlayerT(GY);
+    updatePlayerT(p, { left:false, right:true, up:false, down:false }, DT, GY, WW);
+    assert('walk right: x increases', p.x > 200, true);
+    assert('walk right: facingLeft false', p.facingLeft, false);
+  }
+  // Walk left
+  {
+    const p = createPlayerT(GY); p.x = 300;
+    updatePlayerT(p, { left:true, right:false, up:false, down:false }, DT, GY, WW);
+    assert('walk left: x decreases', p.x < 300, true);
+    assert('walk left: facingLeft true', p.facingLeft, true);
+  }
+  // Left edge clamp
+  {
+    const p = createPlayerT(GY); p.x = 1;
+    updatePlayerT(p, { left:true, right:false, up:false, down:false }, DT, GY, WW);
+    assert('left edge: x clamped to 0', p.x, 0);
+  }
+  // Jump
+  {
+    const p = createPlayerT(GY);
+    updatePlayerT(p, { left:false, right:false, up:true, down:false }, DT, GY, WW);
+    assert('jump: no longer grounded', p.grounded, false);
+    assert('jump: vy negative (moving up)', p.vy < 0, true);
+    assert('jump: y decreased', p.y < GY, true);
+  }
+  // No double jump on held key
+  {
+    const p = createPlayerT(GY);
+    updatePlayerT(p, { left:false, right:false, up:true, down:false }, DT, GY, WW);
+    const vyAfterFirst = p.vy;
+    updatePlayerT(p, { left:false, right:false, up:true, down:false }, DT, GY, WW);
+    assert('no double-jump while key held', p.vy > vyAfterFirst, true); // gravity added, not reset
+  }
+  // Crouch disables walking
+  {
+    const p = createPlayerT(GY); const x0 = p.x;
+    updatePlayerT(p, { left:false, right:true, up:false, down:true }, DT, GY, WW);
+    assert('crouch disables walk', p.x, x0);
+  }
+  // Ground collision
+  {
+    const p = createPlayerT(GY); p.grounded = false; p.y = GY - 5; p.vy = 20;
+    updatePlayerT(p, { left:false, right:false, up:false, down:false }, DT, GY, WW);
+    assert('lands on ground: grounded=true', p.grounded, true);
+    assert('lands on ground: y=groundY', p.y, GY);
+  }
+
   // ── Summary ──────────────────────────────────────────────────
   const summary = document.createElement('h2');
   summary.textContent = `${passed} passed, ${failed} failed`;
