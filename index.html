@@ -224,6 +224,7 @@
     spriteImg.src    = 'img/dmarkel_sprite_sheet.png';
 
     function init() {
+      // Build world
       WORLD = [{
         image: bgImg,
         width: 4096,
@@ -235,10 +236,31 @@
         ],
       }];
 
-      const groundY    = GROUND_FRAC * canvas.height;
-      const testPlayer = createPlayer(groundY);
-      renderWorld(ctx, WORLD[0], 0, canvas.width, canvas.height);
-      renderPlayer(ctx, spriteImg, testPlayer, 0, canvas.height);
+      const groundY = GROUND_FRAC * canvas.height;
+      const player  = createPlayer(groundY);
+      const camera  = createCamera();
+      const zone    = WORLD[0];
+
+      let lastTime = 0;
+
+      function gameLoop(timestamp) {
+        const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap at 50ms
+        lastTime  = timestamp;
+
+        // Update
+        updatePlayer(player, keys, dt, groundY, zone.width);
+        updateCamera(camera, player, canvas.width, zone.width);
+
+        // Render
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        renderWorld(ctx, zone, camera.x, canvas.width, canvas.height);
+        renderPlayer(ctx, spriteImg, player, camera.x, canvas.height);
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Skip first frame's dt spike
+      requestAnimationFrame(ts => { lastTime = ts; requestAnimationFrame(gameLoop); });
     }
   </script>
 </body>
