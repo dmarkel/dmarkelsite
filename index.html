@@ -74,6 +74,31 @@
       if (e.key === 'ArrowDown')  keys.down  = false;
     });
 
+    // ── WORLD ────────────────────────────────────────────────────────
+    // Defined inside init() once images are loaded — see BOOTSTRAP.
+    // Shape: { image, width, layers: [{ srcYStart, srcYEnd, speed }] }
+    let WORLD;
+
+    // ── RENDER ───────────────────────────────────────────────────────
+    function renderLayer(ctx, img, layer, cameraX, canvasW, canvasH) {
+      const bgScale   = canvasH / 1024;
+      const scaledBgW = Math.ceil(1536 * bgScale);
+      const srcY      = layer.srcYStart * 1024;
+      const srcH      = (layer.srcYEnd - layer.srcYStart) * 1024;
+      const destY     = layer.srcYStart * canvasH;
+      const destH     = (layer.srcYEnd - layer.srcYStart) * canvasH;
+      const startX    = getParallaxDrawX(cameraX, layer.speed, scaledBgW);
+      for (let x = startX; x < canvasW; x += scaledBgW) {
+        ctx.drawImage(img, 0, srcY, 1536, srcH, x, destY, scaledBgW, destH);
+      }
+    }
+
+    function renderWorld(ctx, zone, cameraX, canvasW, canvasH) {
+      for (const layer of zone.layers) {
+        renderLayer(ctx, zone.image, layer, cameraX, canvasW, canvasH);
+      }
+    }
+
     // ── BOOTSTRAP ────────────────────────────────────────────────
     const canvas = document.getElementById('game');
     const ctx    = canvas.getContext('2d');
@@ -98,12 +123,19 @@
     spriteImg.src    = 'img/dmarkel_sprite_sheet.png';
 
     function init() {
-      // Game systems wired up in later tasks — placeholder for now
-      ctx.fillStyle = '#222';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#fff';
-      ctx.font = '20px monospace';
-      ctx.fillText('Images loaded — game coming soon', 40, 80);
+      WORLD = [{
+        image: bgImg,
+        width: 4096,
+        layers: [
+          { srcYStart: 0.00, srcYEnd: 0.38, speed: 0.05 },
+          { srcYStart: 0.30, srcYEnd: 0.58, speed: 0.20 },
+          { srcYStart: 0.55, srcYEnd: 0.77, speed: 0.50 },
+          { srcYStart: 0.77, srcYEnd: 1.00, speed: 0.90 },
+        ],
+      }];
+
+      // Static preview — game loop comes in Task 8
+      renderWorld(ctx, WORLD[0], 0, canvas.width, canvas.height);
     }
   </script>
 </body>
