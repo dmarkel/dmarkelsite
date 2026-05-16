@@ -25,8 +25,8 @@
     // ── CONSTANTS ────────────────────────────────────────────────────
     const SPRITE_COLS  = 5;
     const SPRITE_ROWS  = 3;
-    const FRAME_W      = 1536 / SPRITE_COLS;   // 307.2
-    const FRAME_H      = 1024 / SPRITE_ROWS;   // 341.33
+    const FRAME_W      = Math.floor(1536 / SPRITE_COLS);   // 307
+    const FRAME_H      = Math.floor(1024 / SPRITE_ROWS);   // 341
     const CHAR_SCALE   = 0.38;
     const CHAR_W       = Math.round(FRAME_W * CHAR_SCALE);  // ~117px displayed
     const CHAR_H       = Math.round(FRAME_H * CHAR_SCALE);  // ~130px displayed
@@ -255,6 +255,7 @@
 
         // Render
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = false;
         renderWorld(ctx, zone, camera.x, canvas.width, canvas.height);
         renderPlayer(ctx, spriteImg, player, camera.x, canvas.height);
 
