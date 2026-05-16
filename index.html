@@ -99,6 +99,33 @@
       }
     }
 
+    function renderPlayer(ctx, spriteImg, player, cameraX, canvasH) {
+      const groundY = GROUND_FRAC * canvasH;
+      const screenX = Math.round(player.x - cameraX);
+      const screenY = Math.round(groundY - CHAR_H);
+
+      // Resolve animation row + current frame
+      const animKey  = player.animState === 'idle' ? 'walk' : player.animState;
+      const anim     = ANIM[animKey] || ANIM.walk;
+      const frame    = player.animState === 'idle'
+        ? 0
+        : getAnimFrame(anim.frames, player.animElapsed, ANIM_FPS);
+
+      const srcX = frame * FRAME_W;
+      const srcY = anim.row * FRAME_H;
+
+      ctx.save();
+      if (player.facingLeft) {
+        // Mirror: translate to right edge of sprite, flip horizontally, draw at local 0,0
+        ctx.translate(screenX + CHAR_W, screenY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(spriteImg, srcX, srcY, FRAME_W, FRAME_H, 0, 0, CHAR_W, CHAR_H);
+      } else {
+        ctx.drawImage(spriteImg, srcX, srcY, FRAME_W, FRAME_H, screenX, screenY, CHAR_W, CHAR_H);
+      }
+      ctx.restore();
+    }
+
     // ── PLAYER ───────────────────────────────────────────────────────
     function createPlayer(groundY) {
       return {
@@ -208,8 +235,10 @@
         ],
       }];
 
-      // Static preview — game loop comes in Task 8
+      const groundY    = GROUND_FRAC * canvas.height;
+      const testPlayer = createPlayer(groundY);
       renderWorld(ctx, WORLD[0], 0, canvas.width, canvas.height);
+      renderPlayer(ctx, spriteImg, testPlayer, 0, canvas.height);
     }
   </script>
 </body>
